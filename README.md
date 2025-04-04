@@ -97,5 +97,8 @@ Efficiency factors visualization
 
 References
 This program implements theories based on the recrnt manuscript for analyzing fiber reinforced concrete with steel reinforcement.
-
-
+[1] C. Pleesudjai, D. D. Patel, and B. Mobasher, “Generalized Nonlinear Moment–Curvature Model for Serviceability-Based Design of Hybrid Reinforced Concrete,” J. Struct. Eng., vol. 149, no. 12, Dec. 2023
+doi: 10.1061/JSENDH.STENG-12235.
+[2] Y. Yao, K. Aswani, X. Wang, and B. Mobasher, “Analytical displacement solutions for statically determinate beams based on a trilinear moment–curvature model,” Struct. Concr., vol. 19, no. 6, pp. 1619–1632, Dec. 2018, doi: 10.1002/suco.201700150.
+[3] Y. Yao, X. Wang, K. Aswani, and B. Mobasher, “Analytical procedures for design of strain softening and hardening cement composites,” Int. J. Adv. Eng. Sci. Appl. Math., vol. 9, no. 3, pp. 181–194, Sep. 2017, doi: 10.1007/s12572-017-0187-4.
+[4] B. Mobasher, Y. Yao, and C. Soranakom, “Analytical solutions for flexural design of hybrid steel fiber reinforced concrete beams,” Eng. Struct., vol. 100, pp. 164–177, Oct. 2015, doi: 10.1016/j.engstruct.2015.06.006.
