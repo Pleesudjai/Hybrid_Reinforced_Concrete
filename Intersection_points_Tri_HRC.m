@@ -1,4 +1,4 @@
-function [Output_Final,Output,casee] = Intersection_points_Tri_HRC(Mcr,phicr,rho,n,zeta,xi,alpha,eta,kappa,omega,tau,mu,epsilon_cr,d,E,b)
+function [Output_Final,casee] = Intersection_points_Tri_HRC(Mcr,phicr,rho,n,zeta,xi,alpha,eta,kappa,omega,tau,mu,epsilon_cr,d,E,b)
 
 h=d;
 
@@ -246,7 +246,7 @@ Output(10,2:12) = Stage_inf;
 
 
 Output_dummy_case1 = [Stage_0,Stage_121,Stage_2141,Stage_4151,Stage_5152];
-Output_dummy_case2 = [Stage_0,Stage_121,Stage_4142,Stage_4251,Stage_4252];
+Output_dummy_case2 = [Stage_0,Stage_121,Stage_2141,Stage_4142,Stage_4252];
 Output_dummy_case3 = [Stage_0,Stage_121,Stage_2122,Stage_2242,Stage_4252];
 
 
