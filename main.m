@@ -19,76 +19,112 @@ clear;
 close all;
 
 %##########################################################################
-% Load all input parameters from the separate function
+% Part A: Input Parameters
 %##########################################################################
-params = HRC_Input_Parameters();
+% Program information
+progVer = 'HRC_Analysis_v1.0';  % Program version
+fname   = 'Analysis_output.dat';          % Main output file
+fname2  = 'Efficiency_output.dat';       % Efficiency factors output file
+fname3  = 'Intersection_output.dat';     % Intersection points output file
 
-% Extract key parameters to local variables for cleaner code
-b = params.b;
-h = params.h;
-L = params.L;
-alpha = params.alpha;
-d = params.d;
-E = params.E;
-epsilon_cr = params.epsilon_cr;
-mu = params.mu;
-beta_tu = params.beta_tu;
-tau = params.tau;
-eta = params.eta;
-omega = params.omega;
-xi = params.xi;
-lambda_cu = params.lambda_cu;
-fc = params.fc;
-rho = params.rho;
-kappa = params.kappa;
-n = params.n;
-zeta = params.zeta;
-tor = params.tor;
-subMC = params.subMC;
-nSeg = params.nSeg;
-strain = params.strain;
-stress = params.stress;
-strain_st = params.strain_st;
-stress_st = params.stress_st;
-Type = params.Type;
-pointBend = params.pointBend;
-S2 = params.S2;
-Lp = params.Lp;
-c = params.c;
-unLoadFactor1 = params.unLoadFactor1;
-unLoadFactor2 = params.unLoadFactor2;
-mmovie = params.mmovie;
-storemovie = params.storemovie;
-hasTens = params.hasTens;
-fnameTens = params.fnameTens;
-startRowTens = params.startRowTens;
-xColTens = params.xColTens;
-yColTens = params.yColTens;
-bk0tb1cm2Tens = params.bk0tb1cm2Tens;
-hasFlex = params.hasFlex;
-fnameFlex = params.fnameFlex;
-startRowFlex = params.startRowFlex;
-xColFlex = params.xColFlex;
-yColFlex = params.yColFlex;
-bk0tb1cm2Flex = params.bk0tb1cm2Flex;
-fname = params.fname;
-fname2 = params.fname2;
-fname3 = params.fname3;
-progVer = params.progVer;
+% Test configuration
+pointBend     = 4;                     % 3 for 3-point bending, 4 for 4-point bending
+S2            = 100/3;                 % Middle spacing for 4PB (mm), L = S1+S2+S1
+Lp            = 100/3;                 % Plastic length for localized zone (mm)
+c             = 0.5;                   % Localized length/spacing ratio (≤ 0.5 for 4PB)
+unLoadFactor1 = 1;                     % Unload modulus factor (non-localized zone)
+unLoadFactor2 = 1;                     % Unload modulus factor (localized zone)
 
+% Analysis type
+Type = 1;                              % 0 for FRC Model, 1 for HRC Model
+
+% Beam geometry
+b     = 12;                            % Beam width (mm)
+h     = 24;                            % Beam total depth (mm)
+L     = 100;                           % Clear span (mm)
+alpha = 21.795 / h;                    % Depth of steel to total depth ratio
+d     = h;                             % Effective depth (mm)
+
+% Material parameters
+Beta_design = 30;                      % Design consideration
+E           = 6933 * 1000;             % Tensile Young's modulus (psi or MPa)
+
+% Tension model parameters
+epsilon_cr  = 147 * 10^(-6);           % First-cracking strain
+mu          = 0.5;                     % Normalized residual tensile strength
+beta_tu     = 200;                     % Ultimate tensile strain ratio
+tau         = 20.4;                    % Transition zone normalized tensile strain
+eta         = (mu * epsilon_cr - epsilon_cr) / ((tau - 1) * epsilon_cr);  % Calculated eta
+
+% Compression model parameters
+omega       = 18.4;                    % Compressive yield strain parameter
+xi          = 0.99;                    % Compressive Young's modulus parameter
+lambda_cu   = 20;                      % Ultimate compressive strain parameter
+fc          = xi * E * epsilon_cr * omega;  % Compressive strength
+
+% Steel properties
+rho         = 0.005;                   % Tension steel area ratio
+kappa       = 14.1;                    % Rebar yield strain parameter
+n           = 4.2;                     % Rebar Young's modulus parameter
+zeta        = 0.0001;                  % Compression/tension steel area ratio
+
+% Algorithm parameters
+tor         = 10^-4;                   % Tolerance for cracking moment check
+subMC       = [50, 50, 40];            % Subdivisions for moment-curvature
+nSeg        = [40 * 2, 20 * 2];        % Segments for load-deflection analysis
+
+% Experimental data flags
+hasTens     = 0;                       % Set to 1 if tension data available
+hasFlex     = 0;                       % Set to 1 if flexural data available
+
+% Animation settings 
+mmovie      = 0;                       % 1 for animation, 0 for no animation
+storemovie  = 0;                       % Store movie flag
 
 %##########################################################################
-% Generate stress-strain models and create plots
+% Part B: Define the material stress-strain model
 %##########################################################################
-models = generateStressStrainModels(params);
+% Define stress-strain points for plotting
+strain      = [-lambda_cu, -omega, 0, 1, tau, tau, beta_tu] * epsilon_cr;
+stress      = [-omega * xi, -omega * xi, 0, 1, eta * (tau - 1) + 1, mu, mu] * E * epsilon_cr;
+
+strain_st   = [0, kappa, kappa * 100] * epsilon_cr;
+stress_st   = [0, kappa * n, kappa * n] * E * epsilon_cr;
+
+% Plot compression model
+fig1 = figure(1);
+plot(-strain(1:3), -stress(1:3), '-or', 'LineWidth', 1.5);
+grid on;
+title('Compression Model');
+xlabel('Strain');
+ylabel('Stress');
+saveas(fig1, 'Compression_Model.png');
+
+% Plot tension model
+fig2 = figure(2);
+plot(strain(3:7), stress(3:7), '-o', 'LineWidth', 1.5);
+grid on;
+title('Tension Model');
+xlabel('Strain');
+ylabel('Stress');
+saveas(fig2, 'Tension_Model.png');
+
+% Plot steel rebar model
+fig3 = figure(3);
+plot(strain_st(1:3), stress_st(1:3), '-ok', 'LineWidth', 1.5);
+grid on;
+title('Rebar Model');
+xlabel('Strain');
+ylabel('Stress');
+saveas(fig3, 'Rebar_Model.png');
 
 %##########################################################################
 % Part C: Calculate Moment-Curvature relationship
 %##########################################################################
 % Calculate cracking values
-EIcr = params.EIcr;                      % First cracking stiffness
-Mcr = params.Mcr;                        % First cracking moment
-phicr = params.phicr;                    % First cracking curvature
+EIcr = (1/12) * E * b * h^3;             % First cracking stiffness
+Mcr = (1/6) * epsilon_cr * E * b * h^2;  % First cracking moment
+phicr = 2 * epsilon_cr / h;              % First cracking curvature
 
 % Calculate moment-curvature points for each zone
 % Zone 1: Elastic concrete and elastic steel
@@ -1271,19 +1307,154 @@ legend([b1; b2; b3; b4; b5; a1; a2; a3; a4], ...
 saveas(fig18, 'Beta-X_Combined_Analysis.png');
 
 %##########################################################################
-% Part I: Output results to files using dedicated function
+% Part I: Output results to files
 %##########################################################################
-% Call the dedicated function to write all results to output files
-% Pass all necessary parameters
-writeHRCResults(fname, fname2, envelope, output1, output21, output22, ...
-                        output31, output32, output41, output42, output51, output52, ...
-                        lanbda_limit, Matrix_sum_com, Matrix_sum_ten, Rebar_com, Rebar_ten, ...
-                        Total_force, delta, Rs, flexStrs, X, Mmt, Phi, EqualFlexStress, ...
-                        strain, stress, expTensStrn, expTensStrs, expFlexDisp, expFlexLoad, expFlexStrs, ...
-                        b, h, L, epsilon_cr, E, mu, beta_tu, xi, omega, lambda_cu, n, kappa, ...
-                        rho, zeta, tau, alpha, eta, MMcr, MMmax, tor, subMC, nSeg, ...
-                        pointBend, Lp, c, unLoadFactor1, unLoadFactor2, hasTens, fnameTens, ...
-                        hasFlex, fnameFlex, index, stepY, stepM, stepF, fc)
+% Open file for writing main output
+fid = fopen(fname , 'w');
+
+N1 = length(expTensStrn);
+N2 = length(strain);
+N3 = length(envelope(1:1:lanbda_limit(end,1),11));
+N4 = length(expFlexDisp);
+N5 = length(delta(:,end));
+N6 = length(output1(1:1:lanbda_limit(end,1),1));
+N7 = length(X);
+NJ = [N1,N1,N2,N2,N3,N3,N3,N3,N3,N4,N4,N4,N5,N5,N5,N6,N6,N6,N6,N6,N6,N6,N6,N6,N6,N6,N6,N6,N6,N6,N6,...
+     N6,N6,N6,N6,N6,N6,N6,N6,N6,N6,N6,N6,N6,N6,N6,N6,N6,N6,N6,N6,N6,N7,N7,N7,N7,N7,N7,N7];
+
+for i=1:N1
+    %'expTensStrn','expTensStrs'
+    numTable(i,1:2)   = [expTensStrn(i),expTensStrs(i)];
+end
+
+for i=1:N2
+    %'strain','stress',
+    numTable(i,3:4)   = [strain(i),stress(i)];
+end
+
+for i=1:N3
+    %'Bottom strain','Bottom st strain','Top strain','Top st strain','Equivalent Stress'
+    numTable(i,5:9)   = [envelope(i,13),envelope(i,15),envelope(i,14),envelope(i,16),EqualFlexStress(i)];
+end
+
+for i=1:N4
+    %'expFlexDisp','expFlexLoad','expFlexStrs'
+    numTable(i,10:12) = [expFlexDisp(i),expFlexLoad(i),expFlexStrs(i)];
+end
+
+for i=1:N5
+    %'delta','totalload','flexStrs',
+    numTable(i,13:15) = [delta(i,end),2*Rs(i),flexStrs(i)];
+end
+
+for i=1:N6
+    %'bt','ld','kappa_ten','kappa_comp','kd','Net Force','CV envelope','MM envelope','cv envelope','mm envelope',
+    numTable(i,16:52) = [envelope(i,1),envelope(i,2),envelope(i,3),envelope(i,12),envelope(i,4),envelope(i,11),envelope(i,8),envelope(i,6),envelope(i,7),envelope(i,5),output1(i,7),output1(i,5),output21(i,7),output21(i,5),output22(i,7),...
+                         output22(i,5),output31(i,7),output31(i,5),output32(i,7),output32(i,5),output41(i,7),output41(i,5),output42(i,7),output42(i,5),output51(i,7),output51(i,5),output52(i,7),output52(i,5),Matrix_sum_com(i,1)*E*b*h,Matrix_sum_ten(i,1)*E*b*h,Rebar_com(i,1)*E*b*h,Rebar_ten(i,1)*E*b*h,Total_force(i,1)*E*b*h,envelope(i,21),envelope(i,23)...
+                         ,envelope(i,22),envelope(i,24)];
+end
+
+for i=1:N7
+    %'Location_X','M_stepY','M_stepM','M_stepF','CV_stepY'
+    numTable(i,53:59) = [X(i),Mmt(stepY,i),Mmt(stepM,i),Mmt(stepF,i),Phi(stepY, i),Phi(stepM, i),Phi(stepF, i)];
+end
+
+fid = fopen(fname,'w');
+fprintf (fid,'%1s\n\n','Load deflection response of three or four point bending test predicted by uniaxial stress strain model');
+
+if hasTens == 1
+    fprintf (fid,'%12s %1s\n','fnameTens =',fnameTens);
+end
+if hasFlex == 1
+    fprintf (fid,'%12s %1s\n','fnameFlex =',fnameFlex);
+end
+fprintf (fid,'\n');
+fprintf (fid,' If 3 point bending, Lp and unLoadFactor are used, c is ignored\n');
+fprintf (fid,' If 4              , Lp is ignored,                unLoadFactor and c are used\n');
+fprintf (fid,' *****************************************************************************************************************************************************************************************************************************************************\n\n');
+
+fprintf (fid,'%12s,%12s,%12s,%12s,%12s\n','pointBend','Lp','c','unLoadFactor1','unLoadFactor2');
+fprintf (fid,'%12.4g,%12.4g,%12.4g,%12.4g,%12.4g\n', pointBend,Lp,c,unLoadFactor1,unLoadFactor2);
+fprintf (fid,' *****************************************************************************************************************************************************************************************************************************************************\n\n');
+
+fprintf (fid,'%12s,%12s,%12s,%12s,%12s,%12s,%12s,%12s,%12s,%12s,%12s,%12s,%12s,%12s,%12s,%12s,%12s,%12s,%12s,%12s\n',...
+             'b','h','L','ecr','E','mu','beta_tu','gamma','omega','lambda_cu','n','kappa','rho','zeta','tau','alpha','eta','MMcr','MMmax','tor');
+fprintf (fid,'%12.4g,%12.4g,%12.4g,%12.4g,%12.4g,%12.4g,%12.4g,%12.4g,%12.4g,%12.4g,%12.4g,%12.4g,%12.4g,%12.4g,%12.4g,%12.4g,%12.4g,%12.4g,%12.4g,%12.4g\n',...
+             b, h, L, epsilon_cr,E,mu,beta_tu,xi,omega,lambda_cu,n,kappa,rho,zeta,tau,alpha,eta,MMcr,MMmax,tor);
+fprintf (fid,' *****************************************************************************************************************************************************************************************************************************************************\n\n');
+
+fprintf (fid,'%12s,%12s,%12s,%12s,%12s\n','subMC(1)','subMC(2)','subMC(3)','nSeg(1)','nSeg(2)');
+fprintf (fid,'%12.4g,%12.4g,%12.4g,%12.4g,%12.4g\n',subMC(1), subMC(2), subMC(3), nSeg(1), nSeg(2));
+fprintf (fid,' *****************************************************************************************************************************************************************************************************************************************************\n\n');
+
+% print table
+fprintf (fid,'%12s,%12s,%12s,%12s,%12s,%12s,%12s,%12s,%12s,%12s,%12s,%12s,%12s,%12s,%12s,%12s,%12s,%12s,%12s,%12s,%12s,%12s,%12s,%12s,%12s,%12s,%12s,%12s,%12s,%12s,%12s,%12s,%12s,%12s,%12s,%12s,%12s,%12s,%12s,%12s,%12s,%12s,%12s,%12s,%12s,%12s,%12s,%12s,%12s,%12s,%12s,%12s,%12s,%12s,%12s,%12s,%12s,%12s,%12s\n',...
+             'expTensStrn','expTensStrs','strain','stress','Bottom strain','Bottom st strain','Top strain','Top st strain','Equivalent Stress','expFlexDisp','expFlexLoad','expFlexStrs','delta','totalload','flexStrs','bt','ld','kappa_ten','kappa_comp','kd','Net Force',...
+             'CV envelope','MM envelope','cv envelope','mm envelope','cv zone1','mm zone1','cv zone21','mm zone21','cv zone22','mm zone22','cv zone31',...
+             'mm zone31','cv zone32','mm zone32','cv zone41','mm zone41','cv zone42','mm zone42',...
+             'cv zone51','mm zone51','cv zone52','mm zone52','Matrix com force','Matrix ten force','Rebar com force','Rebar ten force','Total force',...
+             'Matrix com froce ratio','Matrix ten force ratio','Rebar com force ratio','Rebar ten force ratio','Location_X','M_stepY','M_stepM','M_stepF','CV_stepY',...
+             'CV_stepM','CV_stepF');
+
+[nRows, nCols] = size(numTable); 
+for i=1:nRows
+    for j=1:nCols
+        if (i > NJ(j)) & (numTable(i,j) == 0)
+            fprintf (fid,'%12s,', '');
+        else
+            fprintf (fid,'%12.4g,', numTable(i,j));
+        end
+    end
+    fprintf (fid,'\n');
+end
+fclose(fid);
+
+%##########################################################################
+% (b) Store Efficiency force at the intersection points 
+%##########################################################################
+
+% Open file for writing
+fileID = fopen(fname2 , 'w');
+
+% Write data to the file
+fprintf(fileID, '#Input parameters \n');
+fprintf(fileID, '#Compressive strength, fc = %.3f\n',fc);
+fprintf(fileID, '#Concrete young modulus, E = %f\n',E);
+fprintf(fileID, '#Normalized concrete compressive modulus, gamma = %.3f\n',xi);
+fprintf(fileID, '#Transition tensile strain, beta_1 = %.3f\n',tau);
+fprintf(fileID, '#Normalized depth of steel reinforcement (d/h), alpha = %.3f\n',alpha);
+fprintf(fileID, '#Compression rebar ratio (As_prime/As),zeta = %.3f\n',zeta);
+fprintf(fileID, '#Normalized concrete compressive yield strain, omega = %.3f\n',omega);
+fprintf(fileID, '#Cracking strain, epsilon_cr = %f\n',epsilon_cr);
+fprintf(fileID, '#Rebar Grade, 29,000,000 psi');
+fprintf(fileID, '#Rebar modulus ratio, n = %.3f\n',n);
+fprintf(fileID, '#Ultimate normalized compressive strain, lambda_cu= %.3f\n\n\n',lambda_cu);
+N1 = length(index(:,1));
+NJ = [N1,N1,N1,N1] ;
+
+for i=1:N1
+    NumTable(i,1:4)   = [envelope(index(i,1),21),envelope(index(i,1),22),envelope(index(i,1),23),envelope(index(i,1),24)];
+end
+
+% print table
+fprintf (fileID,'%12s,%12s,%12s,%12s\n',...
+             'ConcreteCompression','RebarCompression','ConcreteTension','Rebartension');
+
+[nRows, nCols] = size(NumTable); 
+for i=1:nRows
+    for j=1:nCols
+        if (i > NJ(j)) & (NumTable(i,j) == 0)
+            fprintf (fileID,'%12s,', '');
+        else
+            fprintf (fileID,'%12.4g,', NumTable(i,j));
+        end
+    end
+    fprintf (fileID,'\n');
+end
+fclose(fileID);
+% Close the file
+disp('Results have been written to output.txt');
+
 %##########################################################################
 % End of Main Program
 %##########################################################################
