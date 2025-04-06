@@ -19,67 +19,67 @@ clear;
 close all;
 
 %##########################################################################
-% Part A: Input Parameters
+% Load all input parameters from the separate function
 %##########################################################################
-% Program information
-progVer = 'HRC_Analysis_v1.0';  % Program version
-fname   = 'Analysis_output.dat';          % Main output file
-fname2  = 'Efficiency_output.dat';       % Efficiency factors output file
-fname3  = 'Intersection_output.dat';     % Intersection points output file
+params = HRC_Input_Parameters();
 
-% Test configuration
-pointBend     = 4;                     % 3 for 3-point bending, 4 for 4-point bending
-S2            = 100/3;                 % Middle spacing for 4PB (mm), L = S1+S2+S1
-Lp            = 100/3;                 % Plastic length for localized zone (mm)
-c             = 0.5;                   % Localized length/spacing ratio (≤ 0.5 for 4PB)
-unLoadFactor1 = 1;                     % Unload modulus factor (non-localized zone)
-unLoadFactor2 = 1;                     % Unload modulus factor (localized zone)
+% Extract key parameters to local variables for cleaner code
+b = params.b;
+h = params.h;
+L = params.L;
+alpha = params.alpha;
+d = params.d;
+E = params.E;
+epsilon_cr = params.epsilon_cr;
+mu = params.mu;
+beta_tu = params.beta_tu;
+tau = params.tau;
+eta = params.eta;
+omega = params.omega;
+xi = params.xi;
+lambda_cu = params.lambda_cu;
+fc = params.fc;
+rho = params.rho;
+kappa = params.kappa;
+n = params.n;
+zeta = params.zeta;
+tor = params.tor;
+subMC = params.subMC;
+nSeg = params.nSeg;
+strain = params.strain;
+stress = params.stress;
+strain_st = params.strain_st;
+stress_st = params.stress_st;
+Type = params.Type;
+pointBend = params.pointBend;
+S2 = params.S2;
+Lp = params.Lp;
+c = params.c;
+unLoadFactor1 = params.unLoadFactor1;
+unLoadFactor2 = params.unLoadFactor2;
+mmovie = params.mmovie;
+storemovie = params.storemovie;
+hasTens = params.hasTens;
+fnameTens = params.fnameTens;
+startRowTens = params.startRowTens;
+xColTens = params.xColTens;
+yColTens = params.yColTens;
+bk0tb1cm2Tens = params.bk0tb1cm2Tens;
+hasFlex = params.hasFlex;
+fnameFlex = params.fnameFlex;
+startRowFlex = params.startRowFlex;
+xColFlex = params.xColFlex;
+yColFlex = params.yColFlex;
+bk0tb1cm2Flex = params.bk0tb1cm2Flex;
+fname = params.fname;
+fname2 = params.fname2;
+fname3 = params.fname3;
+progVer = params.progVer;
 
-% Analysis type
-Type = 1;                              % 0 for FRC Model, 1 for HRC Model
-
-% Beam geometry
-b     = 12;                            % Beam width (mm)
-h     = 24;                            % Beam total depth (mm)
-L     = 100;                           % Clear span (mm)
-alpha = 21.795 / h;                    % Depth of steel to total depth ratio
-d     = h;                             % Effective depth (mm)
-
-% Material parameters
-Beta_design = 30;                      % Design consideration
-E           = 6933 * 1000;             % Tensile Young's modulus (psi or MPa)
-
-% Tension model parameters
-epsilon_cr  = 147 * 10^(-6);           % First-cracking strain
-mu          = 0.5;                     % Normalized residual tensile strength
-beta_tu     = 200;                     % Ultimate tensile strain ratio
-tau         = 20.4;                    % Transition zone normalized tensile strain
-eta         = (mu * epsilon_cr - epsilon_cr) / ((tau - 1) * epsilon_cr);  % Calculated eta
-
-% Compression model parameters
-omega       = 18.4;                    % Compressive yield strain parameter
-xi          = 0.99;                    % Compressive Young's modulus parameter
-lambda_cu   = 20;                      % Ultimate compressive strain parameter
-fc          = xi * E * epsilon_cr * omega;  % Compressive strength
-
-% Steel properties
-rho         = 0.005;                   % Tension steel area ratio
-kappa       = 14.1;                    % Rebar yield strain parameter
-n           = 4.2;                     % Rebar Young's modulus parameter
-zeta        = 0.0001;                  % Compression/tension steel area ratio
-
-% Algorithm parameters
-tor         = 10^-4;                   % Tolerance for cracking moment check
-subMC       = [50, 50, 40];            % Subdivisions for moment-curvature
-nSeg        = [40 * 2, 20 * 2];        % Segments for load-deflection analysis
-
-% Experimental data flags
-hasTens     = 0;                       % Set to 1 if tension data available
-hasFlex     = 0;                       % Set to 1 if flexural data available
-
-% Animation settings 
-mmovie      = 0;                       % 1 for animation, 0 for no animation
-storemovie  = 0;                       % Store movie flag
+% Get derived parameters
+EIcr = params.EIcr;
+Mcr = params.Mcr;
+phicr = params.phicr;
 
 %##########################################################################
 % Part B: Define the material stress-strain model
