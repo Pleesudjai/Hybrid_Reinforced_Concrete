@@ -1524,8 +1524,7 @@ N1 = length(index(:,1));
 NJ = [N1,N1,N1,N1,N1] ;
 
 for i=2:N1
-    %'expTensStrn','expTensStrs'
-    numTable(i,1:4)   = [evelope(index(i,1),21),evelope(index(i,1),22),evelope(index(i,1),23),evelope(index(i,1),24)];
+    numTable(i,1:4)   = [envelope(index(i,1),21),envelope(index(i,1),22),envelope(index(i,1),23),envelope(index(i,1),24)];
 end
 
 % print table
